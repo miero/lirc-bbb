@@ -26,7 +26,6 @@
 #include <linux/irq.h>
 #include <linux/input.h>
 #include <linux/gpio_keys.h>
-#include <linux/opp.h>
 #include <linux/cpu.h>
 #include <linux/spinlock.h>
 #include <media/lirc.h>
@@ -684,7 +683,7 @@ module_exit(lirc_bbb_exit_module);
 
 MODULE_DESCRIPTION("Infra-red receiver and blaster driver for BeagleBone Black GPIO (based on lirc_rpi).");
 MODULE_AUTHOR("MrMaxx <mrmaxx93@hotmail.com>");
-MODULE_LICENSE("GPLv2");
+MODULE_LICENSE("GPL v2");
 
 module_param(gpio_out_pin, int, S_IRUGO);
 MODULE_PARM_DESC(gpio_out_pin, "GPIO output/transmitter pin number"
