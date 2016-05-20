@@ -28,5 +28,5 @@ http://www.lirc.org/html/configuration-guide.html
 
 ## Credits
 
- - https://github.com/hani93/lirc\_bbb
- - https://thenetworkcable.wordpress.com/2014/10/18/compiling-lirc\_bbb-for-ir-control-on-a-beagle-bone-black/
+ - https://github.com/hani93/lirc_bbb
+ - https://thenetworkcable.wordpress.com/2014/10/18/compiling-lirc_bbb-for-ir-control-on-a-beagle-bone-black/
