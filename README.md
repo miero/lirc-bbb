@@ -25,6 +25,8 @@ Reboot the BBB and verify that /dev/lirc0 file is present.
 
 http://www.lirc.org/html/configuration-guide.html
 
+Or see an example in the "example\_lirc\_conf" directory.
+
 
 ## Credits
 

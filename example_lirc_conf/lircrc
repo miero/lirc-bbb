@@ -1,0 +1,71 @@
+begin
+    remote = Gigabyte_TV_GT
+    button = KEY_POWER
+    prog = irexec
+    config = shutdown -h now
+end
+begin
+    remote = Gigabyte_TV_GT
+    button = KEY_CHANNELUP
+    prog = irexec
+    config = amixer -q sset Master 2+
+    repeat = 1
+end
+begin
+    remote = Gigabyte_TV_GT
+    button = KEY_CHANNELDOWN
+    prog = irexec
+    config = amixer -q sset Master 2-
+    repeat = 1
+end
+begin
+    remote = Gigabyte_TV_GT
+    button = KEY_MUTE
+    prog = irexec
+    config = amixer -q sset Master toggle
+end
+begin
+    remote = Gigabyte_TV_GT
+    button = KEY_VOLUMEUP
+    prog = irexec
+    config = amixer -q sset External 2+
+    repeat = 1
+end
+begin
+    remote = Gigabyte_TV_GT
+    button = KEY_VOLUMEDOWN
+    prog = irexec
+    config = amixer -q sset External 2-
+    repeat = 1
+end
+begin
+    remote = Gigabyte_TV_GT
+    button = KEY_PLAY
+    prog = irexec
+    config = wget -q -O/dev/null http://localhost:4000/api/playback/play
+end
+begin
+    remote = Gigabyte_TV_GT
+    button = KEY_PAUSE
+    prog = irexec
+    config = wget -q -O/dev/null http://localhost:4000/api/playback/pause
+end
+begin
+    remote = Gigabyte_TV_GT
+    button = KEY_STOP
+    prog = irexec
+    config = wget -q -O/dev/null http://localhost:4000/api/playback/pause
+end
+begin
+    remote = Gigabyte_TV_GT
+    button = KEY_FORWARD
+    prog = irexec
+    config = wget -q -O/dev/null http://localhost:4000/api/playback/next
+end
+begin
+    remote = Gigabyte_TV_GT
+    button = KEY_BACK
+    prog = irexec
+    config = wget -q -O/dev/null http://localhost:4000/api/playback/prev
+end
+
