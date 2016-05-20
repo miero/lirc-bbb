@@ -29,4 +29,9 @@ reload: build install unload load
 	@echo Reloaded.
 	@dmesg | tail -10
 
+prepare: scripts
+
+scripts:
+	$(MAKE) -C $(KDIR) scripts
+
 endif
