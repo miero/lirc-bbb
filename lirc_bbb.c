@@ -68,17 +68,10 @@ static int sense = -1;
 /* use softcarrier by default */
 static int softcarrier = 1;
 
-/*struct gpio_chip *gpiochip;
-struct irq_chip *irqchip;
-struct irq_data *irqdata = 0;*/
-
 /* forward declarations */
 static long send_pulse(unsigned long length);
 static void send_space(long length);
 static void lirc_bbb_exit(void);
-
-/* int valid_gpio_pins[] = { 0, 1, 4, 8, 7, 9, 10, 11, 14, 15, 17, 18, 21, 22, 23, 24, 25 }; */
-int valid_gpio_pins[] = { 48, 60 };
 
 static struct platform_device *lirc_bbb_dev;
 static struct timeval lasttv = { 0, 0 };
@@ -301,12 +294,6 @@ static int init_port(void)
 {
 	int i, nlow, nhigh, ret, irq;
 
-	/*
-	gpiochip = gpiochip_find(&gpio_in_pin, is_right_chip);
-
-	if (!gpiochip)
-		return -ENODEV;
-	*/
 	if (gpio_request(gpio_out_pin, LIRC_DRIVER_NAME " ir/out")) {
 		printk(KERN_ALERT LIRC_DRIVER_NAME
 		       ": cant claim gpio pin %d\n", gpio_out_pin);
@@ -327,25 +314,6 @@ static int init_port(void)
 	gpio_direction_output(gpio_out_pin, 1);
 	gpio_set_value(gpio_out_pin, 0);
 
-	/*
-
-	MrMraxx:
-	s3c_gpio_setpull(gpio_in_pin, S3C_GPIO_PULL_UP);
-
-	dprintk("set direction");
-
-	irq = gpiochip->to_irq(gpiochip, gpio_in_pin);
-	dprintk("to_irq %d\n", irq);
-	irqdata = irq_get_irq_data(irq);
-
-	if (irqdata && irqdata->chip) {
-		irqchip = irqdata->chip;
-	} else {
-		ret = -ENODEV;
-		dprintk("no irqdata/chip  %d\n", (int)irqdata);
-		goto exit_gpio_free_in_pin;
-	}
-	*/
 	/* if pin is high, then this must be an active low receiver. */
 	if (sense == -1) {
 		/* wait 1/2 sec for the power supply */
@@ -373,6 +341,8 @@ static int init_port(void)
 		       ": manually using active %s receiver on GPIO pin %d\n",
 		       sense ? "low" : "high", gpio_in_pin);
 	}
+	printk(KERN_INFO LIRC_DRIVER_NAME
+			": transmitter on GPIO pin %d\n", gpio_out_pin);
 
 	return 0;
 
@@ -395,11 +365,6 @@ static int set_use_inc(void *data)
 	/* initialize timestamp */
 	do_gettimeofday(&lasttv);
 
-	/*
-	request_irq(client->irq, ds3232_irq, IRQF_TRIGGER_FALLING,
-				 "ds3232", client);
-	*/
-
 	result = request_irq(gpio_to_irq(gpio_in_pin),
 			     (irq_handler_t) irq_handler, IRQF_TRIGGER_FALLING|IRQF_TRIGGER_RISING ,
 			     LIRC_DRIVER_NAME, (void *) 0);
@@ -415,24 +380,11 @@ static int set_use_inc(void *data)
 		       ": Bad irq number or handler, %d\n", gpio_to_irq(gpio_in_pin));
 		return -EINVAL;
 	default:
-		dprintk("Interrupt %d obtained\n",
-			gpio_to_irq(gpio_in_pin));
 		break;
 	};
 
 	/* initialize pulse/space widths */
 	init_timing_params(duty_cycle, freq);
-
-	spin_lock_irqsave(&lock, flags);
-
-	/* GPIO Pin Falling/Rising Edge Detect Enable */
-	/* irqchip->irq_set_type(irqdata,
-			      IRQ_TYPE_EDGE_RISING | IRQ_TYPE_EDGE_FALLING); */
-
-	/* unmask the irq */
-	/* irqchip->irq_unmask(irqdata); */
-
-	spin_unlock_irqrestore(&lock, flags);
 
 	return 0;
 }
@@ -440,14 +392,6 @@ static int set_use_inc(void *data)
 static void set_use_dec(void *data)
 {
 	unsigned long flags;
-
-	spin_lock_irqsave(&lock, flags);
-
-	/* GPIO Pin Falling/Rising Edge Detect Disable */
-	/* irqchip->irq_set_type(irqdata, 0); */
-	/*irqchip->irq_mask(irqdata); */
-
-	spin_unlock_irqrestore(&lock, flags);
 
 	free_irq(gpio_to_irq(gpio_in_pin), (void *) 0);
 
@@ -608,8 +552,6 @@ static int __init lirc_bbb_init(void)
 
 static void lirc_bbb_exit(void)
 {
-	gpio_free(gpio_out_pin);
-	gpio_free(gpio_in_pin);
 	platform_device_unregister(lirc_bbb_dev);
 	platform_driver_unregister(&lirc_bbb_driver);
 	lirc_buffer_free(&rbuf);
@@ -623,48 +565,29 @@ static int __init lirc_bbb_init_module(void)
 	if (result)
 		return result;
 
-	/* check if the module received valid gpio pin numbers */
-	result = 0;
-	/*if (gpio_in_pin != gpio_out_pin) {
-		for(i = 0; (i < ARRAY_SIZE(valid_gpio_pins)) && (result != 2); i++) {
-			if (gpio_in_pin == valid_gpio_pins[i] ||
-			   gpio_out_pin == valid_gpio_pins[i]) {
-				result++;
-			}
-		}
-	}
-
-	if (result != 2) {
-		result = -EINVAL;
-		printk(KERN_ERR LIRC_DRIVER_NAME
-		       ": invalid GPIO pin(s) specified!\n");
-		goto exit_rpi;
-	}*/
-
 	driver.features = LIRC_CAN_SET_SEND_DUTY_CYCLE |
 			  LIRC_CAN_SET_SEND_CARRIER |
 			  LIRC_CAN_SEND_PULSE |
 			  LIRC_CAN_REC_MODE2;
-
 	driver.dev = &lirc_bbb_dev->dev;
 	driver.minor = lirc_register_driver(&driver);
-
 	if (driver.minor < 0) {
 		printk(KERN_ERR LIRC_DRIVER_NAME
 		       ": device registration failed with %d\n", result);
 		result = -EIO;
-		goto exit_rpi;
+		goto exit;
 	}
-
-	printk(KERN_INFO LIRC_DRIVER_NAME ": driver registered!\n");
 
 	result = init_port();
 	if (result < 0)
-		goto exit_rpi;
+		goto unregister;
 
 	return 0;
 
-	exit_rpi:
+unregister:
+	lirc_unregister_driver(driver.minor);
+
+exit:
 	lirc_bbb_exit();
 
 	return result;
@@ -672,10 +595,10 @@ static int __init lirc_bbb_init_module(void)
 
 static void __exit lirc_bbb_exit_module(void)
 {
-	lirc_bbb_exit();
-
+	gpio_free(gpio_out_pin);
+	gpio_free(gpio_in_pin);
 	lirc_unregister_driver(driver.minor);
-	printk(KERN_INFO LIRC_DRIVER_NAME ": cleaned up module\n");
+	lirc_bbb_exit();
 }
 
 module_init(lirc_bbb_init_module);
@@ -686,14 +609,10 @@ MODULE_AUTHOR("MrMaxx <mrmaxx93@hotmail.com>");
 MODULE_LICENSE("GPL v2");
 
 module_param(gpio_out_pin, int, S_IRUGO);
-MODULE_PARM_DESC(gpio_out_pin, "GPIO output/transmitter pin number"
-		 " processor. "/*Valid pin numbers are: 0, 1, 4, 8, 7, 9, 10, 11,"*/
-		 /*" 14, 15, 17, 18, 21, 22, 23, 24, 25,*/" default 50 (P9_14)");
+MODULE_PARM_DESC(gpio_out_pin, "IR Transmitter GPIO pin number");
 
 module_param(gpio_in_pin, int, S_IRUGO);
-MODULE_PARM_DESC(gpio_in_pin, "GPIO input pin number. You MUST use an interrupt capable pin!"
-		 /*" Valid pin numbers are: 0, 1, 4, 8, 7, 9, 10, 11, 14, 15,"
-		 " 17, 18, 21, 22, 23, 24, 25,*/" default 60 (P9_12)");
+MODULE_PARM_DESC(gpio_in_pin, "IR Receiver GPIO pin number");
 
 module_param(sense, bool, S_IRUGO);
 MODULE_PARM_DESC(sense, "Override autodetection of IR receiver circuit"
